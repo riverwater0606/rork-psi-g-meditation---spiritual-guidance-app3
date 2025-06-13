@@ -168,6 +168,11 @@ export default function MeditationSessionScreen() {
   };
   
   const handleExit = () => {
+    const wasTimerRunning = isTimerRunning; // Check before alert
+    if (wasTimerRunning) {
+      pauseTimer(); // Pause if it was running
+    }
+
     Alert.alert(
       "Exit Meditation",
       "Are you sure you want to exit this meditation session? You will lose any rewards for this session if you exit now.",
@@ -175,7 +180,8 @@ export default function MeditationSessionScreen() {
         {
           text: "No",
           onPress: () => {
-            if (meditationStarted && !timerCompleted) {
+            // Only resume if it was running before we paused it and meditation hasn't ended
+            if (wasTimerRunning && meditationStarted && !timerCompleted) {
               resumeTimer();
             }
           },
