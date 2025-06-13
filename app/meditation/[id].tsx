@@ -558,7 +558,7 @@ export default function MeditationSessionScreen() {
         {/* Controls container with conditional opacity */}
         <View style={[
           styles.controlsContainer,
-          { opacity: showControls ? 1 : 0 }
+          { display: showControls ? 'flex' : 'none' } // Changed from opacity
         ]}>
           <View style={styles.timerContainer}>
             <Text style={styles.timer}>
