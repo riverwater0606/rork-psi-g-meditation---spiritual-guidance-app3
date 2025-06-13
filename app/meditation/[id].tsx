@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // Ensure useCallback is imported from React
 import { 
   StyleSheet, 
   Text, 
@@ -200,10 +200,24 @@ export default function MeditationSessionScreen() {
   //   );
   // };
 
-  const performDirectExit = () => {
-    failSession();
-    router.replace('/(tabs)/index');
-  };
+  const performDirectExit = useCallback(() => {
+    console.log('[MeditationScreen] performDirectExit called');
+    try {
+      console.log('[MeditationScreen] Calling failSession...');
+      failSession();
+      console.log('[MeditationScreen] failSession completed.');
+
+      console.log('[MeditationScreen] Calling router.replace...');
+      if (router) {
+        router.replace('/(tabs)/index');
+        console.log('[MeditationScreen] router.replace completed.');
+      } else {
+        console.error('[MeditationScreen] Router object is undefined in performDirectExit');
+      }
+    } catch (error) {
+      console.error('[MeditationScreen] Error in performDirectExit:', error);
+    }
+  }, [failSession, router]); // Added failSession and router as dependencies
   
   // Toggle controls only when the toggle button is pressed
   const toggleControls = () => {
@@ -647,14 +661,14 @@ const styles = StyleSheet.create({
   fullScreenContainer: {
     flex: 1,
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'transparent',
   },
   controlsContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'transparent', // Increased opacity for more consistent background
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   alwaysVisibleHeader: {
     padding: 16,
@@ -663,7 +677,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
-    backgroundColor: 'transparent', // Added background to prevent lighter top
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   header: {
     flexDirection: 'row',
