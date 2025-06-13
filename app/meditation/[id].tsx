@@ -134,7 +134,7 @@ export default function MeditationSessionScreen() {
     );
 
     return () => backHandler.remove();
-  }, []); // Removed performDirectExit from dependency array
+  }, []);
   
   const formatTime = (seconds: number) => {
     // For unlimited meditation
