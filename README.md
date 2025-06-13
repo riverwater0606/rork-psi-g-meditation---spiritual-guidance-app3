@@ -1,2 +1,2 @@
-# rork-psi-g-meditation---spiritual-guidance-app3
+# rork-psi-g-meditation---spiritual-guidance-app
 Created by Rork
