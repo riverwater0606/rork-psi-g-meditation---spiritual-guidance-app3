@@ -124,17 +124,17 @@ export default function MeditationSessionScreen() {
   // Handle back button on Android
   useEffect(() => {
     const backAction = () => {
-      handleExit();
-      return true;
+      performDirectExit(); // Changed from handleExit()
+      return true; // Prevent default behavior
     };
-    
+
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       backAction
     );
-    
+
     return () => backHandler.remove();
-  }, []);
+  }, [performDirectExit]); // Added performDirectExit to dependency array
   
   const formatTime = (seconds: number) => {
     // For unlimited meditation
@@ -167,37 +167,42 @@ export default function MeditationSessionScreen() {
     resumeTimer();
   };
   
-  const handleExit = () => {
-    const wasTimerRunning = isTimerRunning; // Check before alert
-    if (wasTimerRunning) {
-      pauseTimer(); // Pause if it was running
-    }
+  // const handleExit = () => {
+  //   const wasTimerRunning = isTimerRunning; // Check before alert
+  //   if (wasTimerRunning) {
+  //     pauseTimer(); // Pause if it was running
+  //   }
 
-    Alert.alert(
-      "Exit Meditation",
-      "Are you sure you want to exit this meditation session? You will lose any rewards for this session if you exit now.",
-      [
-        {
-          text: "No",
-          onPress: () => {
-            // Only resume if it was running before we paused it and meditation hasn't ended
-            if (wasTimerRunning && meditationStarted && !timerCompleted) {
-              resumeTimer();
-            }
-          },
-          style: "cancel"
-        },
-        {
-          text: "Yes, Exit",
-          onPress: () => {
-            failSession(); // Mark session as failed
-            router.replace('/(tabs)/index'); // Explicitly navigate to home tab
-          },
-          style: "destructive"
-        }
-      ],
-      { cancelable: false }
-    );
+  //   Alert.alert(
+  //     "Exit Meditation",
+  //     "Are you sure you want to exit this meditation session? You will lose any rewards for this session if you exit now.",
+  //     [
+  //       {
+  //         text: "No",
+  //         onPress: () => {
+  //           // Only resume if it was running before we paused it and meditation hasn't ended
+  //           if (wasTimerRunning && meditationStarted && !timerCompleted) {
+  //             resumeTimer();
+  //           }
+  //         },
+  //         style: "cancel"
+  //       },
+  //       {
+  //         text: "Yes, Exit",
+  //         onPress: () => {
+  //           failSession(); // Mark session as failed
+  //           router.replace('/(tabs)/index'); // Explicitly navigate to home tab
+  //         },
+  //         style: "destructive"
+  //       }
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
+
+  const performDirectExit = () => {
+    failSession();
+    router.replace('/(tabs)/index');
   };
   
   // Toggle controls only when the toggle button is pressed
@@ -537,7 +542,7 @@ export default function MeditationSessionScreen() {
         <View style={styles.alwaysVisibleHeader}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={handleExit}
+            onPress={performDirectExit}
           >
             <ChevronLeft size={24} color={colors.white} />
           </TouchableOpacity>
@@ -601,7 +606,7 @@ export default function MeditationSessionScreen() {
                 variant="outline"
                 style={[styles.actionButton, styles.stopButton]}
                 textStyle={{ color: colors.white }}
-                onPress={handleExit}
+                onPress={performDirectExit}
               />
             </View>
           </View>
@@ -642,13 +647,14 @@ const styles = StyleSheet.create({
   fullScreenContainer: {
     flex: 1,
     justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   controlsContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Increased opacity for more consistent background
+    backgroundColor: 'transparent', // Increased opacity for more consistent background
   },
   alwaysVisibleHeader: {
     padding: 16,
@@ -657,7 +663,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Added background to prevent lighter top
+    backgroundColor: 'transparent', // Added background to prevent lighter top
   },
   header: {
     flexDirection: 'row',
