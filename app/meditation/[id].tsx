@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; // Ensure useCallback is imported from React
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -124,7 +124,7 @@ export default function MeditationSessionScreen() {
   // Handle back button on Android
   useEffect(() => {
     const backAction = () => {
-      performDirectExit(); // Changed from handleExit()
+      handleExit();
       return true; // Prevent default behavior
     };
 
@@ -134,7 +134,7 @@ export default function MeditationSessionScreen() {
     );
 
     return () => backHandler.remove();
-  }, [performDirectExit]); // Added performDirectExit to dependency array
+  }, []); // Removed performDirectExit from dependency array
   
   const formatTime = (seconds: number) => {
     // For unlimited meditation
@@ -167,61 +167,37 @@ export default function MeditationSessionScreen() {
     resumeTimer();
   };
   
-  // const handleExit = () => {
-  //   const wasTimerRunning = isTimerRunning; // Check before alert
-  //   if (wasTimerRunning) {
-  //     pauseTimer(); // Pause if it was running
-  //   }
-
-  //   Alert.alert(
-  //     "Exit Meditation",
-  //     "Are you sure you want to exit this meditation session? You will lose any rewards for this session if you exit now.",
-  //     [
-  //       {
-  //         text: "No",
-  //         onPress: () => {
-  //           // Only resume if it was running before we paused it and meditation hasn't ended
-  //           if (wasTimerRunning && meditationStarted && !timerCompleted) {
-  //             resumeTimer();
-  //           }
-  //         },
-  //         style: "cancel"
-  //       },
-  //       {
-  //         text: "Yes, Exit",
-  //         onPress: () => {
-  //           failSession(); // Mark session as failed
-  //           router.replace('/(tabs)/index'); // Explicitly navigate to home tab
-  //         },
-  //         style: "destructive"
-  //       }
-  //     ],
-  //     { cancelable: false }
-  //   );
-  // };
-
-  const performDirectExit = useCallback(() => {
-    console.log('[MeditationScreen] performDirectExit called');
-    try {
-      console.log('[MeditationScreen] Calling failSession...');
-      failSession();
-      console.log('[MeditationScreen] failSession completed.');
-
-      console.log('[MeditationScreen] Calling router.replace...');
-      if (router) {
-        router.replace('/(tabs)/index');
-        console.log('[MeditationScreen] router.replace completed.');
-      } else {
-        console.error('[MeditationScreen] Router object is undefined in performDirectExit');
-      }
-    } catch (error) {
-      console.error('[MeditationScreen] Error in performDirectExit:', error);
+  const handleExit = () => {
+    const wasTimerRunning = isTimerRunning; // Check before alert
+    if (wasTimerRunning) {
+      pauseTimer(); // Pause if it was running
     }
-  }, [failSession, router]); // Added failSession and router as dependencies
-  
-  // Toggle controls only when the toggle button is pressed
-  const toggleControls = () => {
-    setShowControls(prevState => !prevState);
+
+    Alert.alert(
+      "Exit Meditation",
+      "Are you sure you want to exit this meditation session? You will lose any rewards for this session if you exit now.",
+      [
+        {
+          text: "No",
+          onPress: () => {
+            // Only resume if it was running before we paused it and meditation hasn't ended
+            if (wasTimerRunning && meditationStarted && !timerCompleted) {
+              resumeTimer();
+            }
+          },
+          style: "cancel"
+        },
+        {
+          text: "Yes, Exit",
+          onPress: () => {
+            failSession(); // Mark session as failed
+            router.replace('/(tabs)/index'); // Explicitly navigate to home tab
+          },
+          style: "destructive"
+        }
+      ],
+      { cancelable: false }
+    );
   };
   
   // Check if the complete button should be enabled
@@ -556,7 +532,7 @@ export default function MeditationSessionScreen() {
         <View style={styles.alwaysVisibleHeader}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={performDirectExit}
+            onPress={handleExit}
           >
             <ChevronLeft size={24} color={colors.white} />
           </TouchableOpacity>
@@ -620,7 +596,7 @@ export default function MeditationSessionScreen() {
                 variant="outline"
                 style={[styles.actionButton, styles.stopButton]}
                 textStyle={{ color: colors.white }}
-                onPress={performDirectExit}
+                onPress={handleExit}
               />
             </View>
           </View>
@@ -638,7 +614,7 @@ export default function MeditationSessionScreen() {
         {/* Dedicated button to toggle controls - always visible and more prominent */}
         <TouchableOpacity 
           style={styles.toggleControlsButton} 
-          onPress={toggleControls}
+          onPress={() => setShowControls(prevState => !prevState)}
         >
           <Text style={styles.toggleControlsText}>
             {showControls ? "Hide Controls" : "Show Controls"}
