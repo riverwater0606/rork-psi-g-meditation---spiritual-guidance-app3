@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   StyleSheet, 
   Text, 
   View, 
   TouchableOpacity, 
-  BackHandler,
-  Alert,
-  Platform,
+  Alert, 
+  Platform, 
   ScrollView
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play, Pause, X, ChevronLeft, Clock, Plus, Minus } from 'lucide-react-native';
+import { Play, Pause, ChevronLeft, Clock, Plus, Minus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useMeditationStore } from '@/store/meditationStore';
 import { meditationSpaces } from '@/constants/meditationSpaces';
@@ -57,13 +56,13 @@ export default function MeditationSessionScreen() {
     currentSession
   } = useMeditationStore();
   
-  const [showControls, setShowControls] = useState(true); // Always show controls by default
-  const [customDuration, setCustomDuration] = useState(customDurationParam || 300); // Default 5 minutes or use param
+  const [showControls, setShowControls] = useState(true);
+  const [customDuration, setCustomDuration] = useState(customDurationParam || 300);
   const [showDurationPicker, setShowDurationPicker] = useState(id === 'quick' && !customDurationParam);
   const [timerCompleted, setTimerCompleted] = useState(false);
-  const [meditationStarted, setMeditationStarted] = useState(false); // Track if meditation has started
+  const [meditationStarted, setMeditationStarted] = useState(false);
   const [showExtendOptions, setShowExtendOptions] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0); // Track elapsed time for unlimited sessions
+  const [elapsedTime, setElapsedTime] = useState(0);
   
   // Get space details if this is a space-specific meditation
   const isQuickSession = id === 'quick';
@@ -77,16 +76,13 @@ export default function MeditationSessionScreen() {
         space?.name || null,
         customDuration
       );
-      // We initialize the session but pause it immediately
       pauseTimer();
     }
   }, [space, startSession, currentSession, customDuration, showDurationPicker]);
   
   // Timer logic - only run when meditation has been started
   useEffect(() => {
-    // Special handling for unlimited meditation
     if (customDuration === -1 && isTimerRunning && meditationStarted) {
-      // For unlimited meditation, we track elapsed time instead of counting down
       intervalRef.current = setInterval(() => {
         setElapsedTime(prev => prev + 1);
       }, 1000);
@@ -98,7 +94,6 @@ export default function MeditationSessionScreen() {
       };
     }
     
-    // Normal countdown timer logic
     if (isTimerRunning && remainingTime > 0 && meditationStarted) {
       intervalRef.current = setInterval(() => {
         useMeditationStore.getState().updateRemainingTime(
@@ -106,7 +101,6 @@ export default function MeditationSessionScreen() {
         );
       }, 1000);
     } else if (remainingTime <= 0 && currentSession && meditationStarted) {
-      // Timer has completed
       setTimerCompleted(true);
       setShowExtendOptions(true);
       if (Platform.OS !== 'web') {
@@ -121,23 +115,7 @@ export default function MeditationSessionScreen() {
     };
   }, [isTimerRunning, remainingTime, meditationStarted, customDuration]);
   
-  // Handle back button on Android
-  useEffect(() => {
-    const backAction = () => {
-      handleExit();
-      return true; // Prevent default behavior
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
-
-    return () => backHandler.remove();
-  }, []);
-  
   const formatTime = (seconds: number) => {
-    // For unlimited meditation
     if (seconds === -1) {
       return "∞";
     }
@@ -168,30 +146,28 @@ export default function MeditationSessionScreen() {
   };
   
   const handleExit = () => {
-    const wasTimerRunning = isTimerRunning; // Check before alert
-    if (wasTimerRunning) {
-      pauseTimer(); // Pause if it was running
+    if (isTimerRunning) {
+      pauseTimer();
     }
-
+    
     Alert.alert(
       "Exit Meditation",
-      "Are you sure you want to exit this meditation session? You will lose any rewards for this session if you exit now.",
+      "Are you sure you want to exit this meditation session? You will lose any progress for this session.",
       [
         {
-          text: "No",
+          text: "Cancel",
           onPress: () => {
-            // Only resume if it was running before we paused it and meditation hasn't ended
-            if (wasTimerRunning && meditationStarted && !timerCompleted) {
+            if (meditationStarted && !timerCompleted) {
               resumeTimer();
             }
           },
           style: "cancel"
         },
         {
-          text: "Yes, Exit",
+          text: "Exit",
           onPress: () => {
-            failSession(); // Mark session as failed
-            router.replace('/(tabs)/index'); // Explicitly navigate to home tab
+            failSession();
+            router.replace('/(tabs)/index');
           },
           style: "destructive"
         }
@@ -200,23 +176,17 @@ export default function MeditationSessionScreen() {
     );
   };
   
-  // Check if the complete button should be enabled
   const isCompleteEnabled = () => {
-    // For timed sessions, only enable when timer has completed AND not paused
     if (customDuration !== -1) {
       return timerCompleted;
     }
-    
-    // For unlimited sessions, enable after minimum time has passed AND not paused
     return elapsedTime >= MIN_UNLIMITED_TIME;
   };
   
   const handleComplete = () => {
-    // Only allow completing if the timer has finished counting down
-    // or if it's an unlimited session that has reached minimum time
     if (isCompleteEnabled()) {
       completeSession();
-      router.replace('/profile');
+      router.replace('/(tabs)/profile');
     }
   };
   
@@ -226,13 +196,9 @@ export default function MeditationSessionScreen() {
   };
   
   const handleExtendMeditation = (additionalMinutes: number) => {
-    // Calculate new duration in seconds
     const additionalSeconds = additionalMinutes * 60;
-    
-    // Update the remaining time
     useMeditationStore.getState().updateRemainingTime(additionalSeconds);
     
-    // Update the session duration
     if (currentSession) {
       const newDuration = currentSession.duration + additionalSeconds;
       startSession(
@@ -242,11 +208,8 @@ export default function MeditationSessionScreen() {
       );
     }
     
-    // Reset timer completed state and hide extend options
     setTimerCompleted(false);
     setShowExtendOptions(false);
-    
-    // Resume the timer
     resumeTimer();
   };
   
@@ -254,15 +217,15 @@ export default function MeditationSessionScreen() {
     return (
       <View style={[
         styles.durationPickerContainer,
-        { backgroundColor: theme === 'dark' ? colors.darkBackground : colors.background }
+        { backgroundColor: theme === 'light' ? colors.background : colors.darkBackground }
       ]}>
         <View style={styles.durationPickerHeader}>
           <Text style={[
             styles.durationPickerTitle,
-            { color: theme === 'dark' ? colors.darkText : colors.text }
+            { color: theme === 'light' ? colors.text : colors.darkText }
           ]}>Select Meditation Duration</Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <X size={24} color={theme === 'dark' ? colors.darkText : colors.text} />
+            <ChevronLeft size={24} color={theme === 'light' ? colors.text : colors.darkText} />
           </TouchableOpacity>
         </View>
         
@@ -272,14 +235,14 @@ export default function MeditationSessionScreen() {
               key={preset.label}
               style={[
                 styles.durationOption,
-                { backgroundColor: theme === 'dark' ? colors.darkCard : colors.white }
+                { backgroundColor: theme === 'light' ? colors.white : colors.darkCard }
               ]}
               onPress={() => handleDurationSelect(preset.value)}
             >
-              <Clock size={20} color={theme === 'dark' ? colors.darkPrimary : colors.primary} />
+              <Clock size={20} color={theme === 'light' ? colors.primary : colors.darkPrimary} />
               <Text style={[
                 styles.durationText,
-                { color: theme === 'dark' ? colors.darkText : colors.text }
+                { color: theme === 'light' ? colors.text : colors.darkText }
               ]}>{preset.label}</Text>
             </TouchableOpacity>
           ))}
@@ -287,14 +250,14 @@ export default function MeditationSessionScreen() {
           <TouchableOpacity
             style={[
               styles.durationOption,
-              { backgroundColor: theme === 'dark' ? colors.darkCard : colors.white }
+              { backgroundColor: theme === 'light' ? colors.white : colors.darkCard }
             ]}
             onPress={() => setShowDurationPicker(false)}
           >
-            <X size={20} color={theme === 'dark' ? colors.darkText : colors.text} />
+            <ChevronLeft size={20} color={theme === 'light' ? colors.text : colors.darkText} />
             <Text style={[
               styles.durationText,
-              { color: theme === 'dark' ? colors.darkText : colors.text }
+              { color: theme === 'light' ? colors.text : colors.darkText }
             ]}>Custom Duration</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -302,7 +265,6 @@ export default function MeditationSessionScreen() {
     );
   };
   
-  // Render extend meditation options
   const renderExtendOptions = () => {
     return (
       <View style={styles.extendContainer}>
@@ -341,24 +303,21 @@ export default function MeditationSessionScreen() {
     );
   };
   
-  // Custom duration picker with + and - buttons
   const renderCustomDurationPicker = () => {
-    // Convert seconds to minutes for display
     const minutes = customDuration === -1 ? "∞" : Math.floor(customDuration / 60);
     
     const incrementDuration = () => {
-      if (customDuration === -1) return; // Already unlimited
-      setCustomDuration(prev => prev + 5 * 60); // Add 5 minutes
+      if (customDuration === -1) return;
+      setCustomDuration(prev => prev + 5 * 60);
     };
     
     const decrementDuration = () => {
       if (customDuration === -1) {
-        setCustomDuration(60 * 60); // Set to 60 minutes if coming from unlimited
+        setCustomDuration(60 * 60);
         return;
       }
-      
       if (customDuration > 5 * 60) {
-        setCustomDuration(prev => prev - 5 * 60); // Subtract 5 minutes
+        setCustomDuration(prev => prev - 5 * 60);
       }
     };
     
@@ -416,25 +375,23 @@ export default function MeditationSessionScreen() {
     );
   };
   
-  // Show duration picker before starting session
   if (showDurationPicker) {
     return (
       <View style={[
         styles.container, 
-        { backgroundColor: theme === 'dark' ? colors.darkBackground : colors.background }
+        { backgroundColor: theme === 'light' ? colors.background : colors.darkBackground }
       ]}>
-        <StatusBar style={theme === 'dark' ? "light" : "dark"} />
+        <StatusBar style={theme === 'light' ? "dark" : "light"} />
         {renderDurationPicker()}
       </View>
     );
   }
   
-  // If session is complete, show completion screen
   if (remainingTime <= 0 && !currentSession) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={theme === 'dark' ? ['#1E3A8A', '#2563EB', '#3B82F6'] : ['#4c669f', '#3b5998', '#192f6a']}
+          colors={theme === 'light' ? ['#4c669f', '#3b5998', '#192f6a'] : ['#1E3A8A', '#2563EB', '#3B82F6']}
           style={styles.background}
         />
         <View style={styles.completionContainer}>
@@ -452,7 +409,6 @@ export default function MeditationSessionScreen() {
     );
   }
   
-  // Show preparation screen if meditation hasn't started yet
   if (!meditationStarted) {
     return (
       <View style={styles.container}>
@@ -466,7 +422,7 @@ export default function MeditationSessionScreen() {
           />
         ) : (
           <LinearGradient
-            colors={theme === 'dark' ? ['#1E3A8A', '#2563EB', '#3B82F6'] : ['#4c669f', '#3b5998', '#192f6a']}
+            colors={theme === 'light' ? ['#4c669f', '#3b5998', '#192f6a'] : ['#1E3A8A', '#2563EB', '#3B82F6']}
             style={styles.background}
           />
         )}
@@ -521,14 +477,12 @@ export default function MeditationSessionScreen() {
         />
       ) : (
         <LinearGradient
-          colors={theme === 'dark' ? ['#1E3A8A', '#2563EB', '#3B82F6'] : ['#4c669f', '#3b5998', '#192f6a']}
+          colors={theme === 'light' ? ['#4c669f', '#3b5998', '#192f6a'] : ['#1E3A8A', '#2563EB', '#3B82F6']}
           style={styles.background}
         />
       )}
       
-      {/* Meditation content container */}
       <View style={styles.fullScreenContainer}>
-        {/* Always visible back button */}
         <View style={styles.alwaysVisibleHeader}>
           <TouchableOpacity 
             style={styles.backButton} 
@@ -538,17 +492,15 @@ export default function MeditationSessionScreen() {
           </TouchableOpacity>
         </View>
         
-        {/* Show extend options if timer completed */}
         {showExtendOptions && (
           <View style={styles.extendOverlay}>
             {renderExtendOptions()}
           </View>
         )}
         
-        {/* Controls container with conditional opacity */}
         <View style={[
           styles.controlsContainer,
-          { display: showControls ? 'flex' : 'none' } // Changed from opacity
+          { display: showControls ? 'flex' : 'none' }
         ]}>
           <View style={styles.timerContainer}>
             <Text style={styles.timer}>
@@ -574,9 +526,7 @@ export default function MeditationSessionScreen() {
               )}
             </TouchableOpacity>
             
-            {/* Action buttons container - more visible now */}
             <View style={styles.actionButtonsContainer}>
-              {/* Complete button - only enabled when timer has completed */}
               <Button 
                 title="Complete" 
                 style={[
@@ -590,7 +540,6 @@ export default function MeditationSessionScreen() {
                 disabled={!isCompleteEnabled() || !isTimerRunning}
               />
               
-              {/* Exit button - always enabled */}
               <Button 
                 title="Exit" 
                 variant="outline"
@@ -602,7 +551,6 @@ export default function MeditationSessionScreen() {
           </View>
         </View>
         
-        {/* Always visible minimal timer when controls are hidden */}
         {!showControls && (
           <View style={styles.minimalTimerContainer}>
             <Text style={styles.minimalTimer}>
@@ -611,7 +559,6 @@ export default function MeditationSessionScreen() {
           </View>
         )}
         
-        {/* Dedicated button to toggle controls - always visible and more prominent */}
         <TouchableOpacity 
           style={styles.toggleControlsButton} 
           onPress={() => setShowControls(prevState => !prevState)}
@@ -632,7 +579,7 @@ const styles = StyleSheet.create({
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: -1, // Ensure background stays behind content
+    zIndex: -1,
   },
   fullScreenContainer: {
     flex: 1,
@@ -654,12 +601,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
     backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 40,
   },
   backButton: {
     width: 44,
@@ -707,24 +648,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  // Updated action buttons container
   actionButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',
     gap: 12,
-    marginTop: 8, // Add some space from the timer button
+    marginTop: 8,
   },
   actionButton: {
     minWidth: 120,
   },
   stopButton: {
-    borderColor: 'rgba(255,255,255,0.8)', // Make border more visible
-    borderWidth: 2, // Thicker border
-    backgroundColor: 'rgba(0,0,0,0.3)', // Neutral dark background instead of red
+    borderColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 2,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   disabledButton: {
-    backgroundColor: 'rgba(59, 130, 246, 0.5)', // Faded primary color
+    backgroundColor: 'rgba(59, 130, 246, 0.5)',
   },
   completionContainer: {
     flex: 1,
@@ -785,7 +725,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginLeft: 12,
   },
-  // Minimal timer display
   minimalTimerContainer: {
     position: 'absolute',
     top: '50%',
@@ -802,7 +741,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
   },
-  // Toggle controls button - always visible and more prominent
   toggleControlsButton: {
     position: 'absolute',
     bottom: 30,
@@ -811,7 +749,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 25,
-    zIndex: 10, // Ensure it's above other elements
+    zIndex: 10,
     borderColor: 'rgba(255,255,255,0.3)',
     borderWidth: 1,
   },
@@ -820,11 +758,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  // Preparation screen styles
   preparationContainer: {
     flex: 1,
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Increased opacity for consistency
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   preparationContent: {
     flex: 1,
@@ -865,7 +802,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.8,
   },
-  // Extend meditation options
   extendOverlay: {
     position: 'absolute',
     top: 0,
@@ -884,7 +820,6 @@ const styles = StyleSheet.create({
     width: '85%',
     maxWidth: 400,
     alignItems: 'center',
-    backdropFilter: 'blur(10px)',
   },
   extendTitle: {
     fontSize: 24,
@@ -921,7 +856,6 @@ const styles = StyleSheet.create({
   completeButton: {
     minWidth: 200,
   },
-  // Custom duration picker
   customDurationContainer: {
     flex: 1,
     justifyContent: 'center',

@@ -492,7 +492,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 999,
   },
-  // Magic bubble styles
   magicBubble: {
     position: 'absolute',
     width: 12,
@@ -500,7 +499,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: 'rgba(59, 130, 246, 0.7)',
   },
-  // Glow effect
   glow: {
     position: 'absolute',
     width: BUTTON_SIZE,

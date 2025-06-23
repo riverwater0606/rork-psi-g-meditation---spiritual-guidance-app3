@@ -53,8 +53,8 @@ export const useMeditationStore = create<MeditationState>()(
         
         set({
           currentSession: newSession,
-          isTimerRunning: true,
-          remainingTime: duration === -1 ? 0 : duration, // For unlimited sessions, set to 0 but don't count down
+          isTimerRunning: false, // Start paused to avoid immediate countdown
+          remainingTime: duration === -1 ? 0 : duration,
         });
       },
       
@@ -63,27 +63,20 @@ export const useMeditationStore = create<MeditationState>()(
         
         if (!currentSession) return;
         
-        // Calculate session duration in minutes for token rewards
         let sessionDurationMinutes = 0;
-        
         if (currentSession.duration === -1) {
-          // For unlimited sessions, use a default value or calculate based on elapsed time
-          // Here we'll use 30 minutes as a default reward for unlimited sessions
-          sessionDurationMinutes = 30;
+          sessionDurationMinutes = 30; // Default for unlimited
         } else {
           sessionDurationMinutes = Math.floor(currentSession.duration / 60);
         }
         
-        // Calculate token rewards
         const tokenReward = Math.floor(sessionDurationMinutes * TOKEN_REWARD_RATE);
-        
         const completedSession = {
           ...currentSession,
           completed: true,
           failed: false,
         };
         
-        // Check if this is a new day for streak calculation
         const lastDate = profile.lastMeditation 
           ? new Date(profile.lastMeditation).setHours(0, 0, 0, 0)
           : null;
@@ -121,7 +114,7 @@ export const useMeditationStore = create<MeditationState>()(
           ...currentSession,
           completed: false,
           failed: true,
-          date: new Date().toISOString(), // Update the date to when it was failed
+          date: new Date().toISOString(),
         };
         
         set({

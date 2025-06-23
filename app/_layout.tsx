@@ -18,30 +18,6 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Animation configuration for page transitions
-const transitionConfig = {
-  screenInterpolator: ({ position, scene }) => {
-    const { index } = scene;
-    
-    // Slide from right animation
-    const translateX = position.interpolate({
-      inputRange: [index - 1, index, index + 1],
-      outputRange: [300, 0, 0],
-    });
-    
-    // Fade animation
-    const opacity = position.interpolate({
-      inputRange: [index - 1, index - 0.99, index],
-      outputRange: [0, 1, 1],
-    });
-    
-    return {
-      transform: [{ translateX }],
-      opacity,
-    };
-  },
-};
-
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
@@ -83,9 +59,6 @@ function RootLayoutNav() {
   const headerTintColor = theme === 'dark' ? colors.darkPrimary : colors.primary;
   const headerTitleColor = theme === 'dark' ? colors.darkText : colors.text;
   
-  // Animation value for screen transitions
-  const screenAnimation = React.useRef(new Animated.Value(0)).current;
-  
   return (
     <View style={{ flex: 1, backgroundColor }}>
       <StatusBar style={theme === 'dark' ? "light" : "dark"} />
@@ -103,13 +76,10 @@ function RootLayoutNav() {
           contentStyle: {
             backgroundColor: backgroundColor,
           },
-          // Add animation for page transitions
           animation: 'slide_from_right',
-          // Custom animation options
           animationDuration: 300,
           gestureEnabled: true,
           gestureDirection: 'horizontal',
-          // For web compatibility
           presentation: 'card',
         }}
       >
@@ -130,7 +100,6 @@ function RootLayoutNav() {
         />
       </Stack>
       
-      {/* Only show the floating assistant when not on meditation screens */}
       {showFloatingAssistant && <FloatingAssistant />}
     </View>
   );

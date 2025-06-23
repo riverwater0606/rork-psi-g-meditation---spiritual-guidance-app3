@@ -272,7 +272,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
-  // Duration picker styles
   durationPickerOverlay: {
     position: 'absolute',
     top: 0,
